@@ -1,6 +1,6 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
-# Date: 2023-14
+# Date: 2023-1-1-19
 # Version: 3.2
 # Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
 # The script will then consolidate the results into a single .docx file
@@ -18,7 +18,6 @@ from tkinter import ttk
 from bs4 import BeautifulSoup
 import threading
 import docx
-from docx.shared import RGBColor
 import tkinter
 import pandas
 import pandas as pd
@@ -46,14 +45,13 @@ def main():
         ("Select CellLine ID file", "*.xlsx"), ("all files", "*.*")))
 
     # Load the client list excel file
-    selected_client, reference_number= SelectClient()
+    selected_client, reference_number = SelectClient()
 
     client_database = pd.read_excel("CellLineClients.xlsx")
 
     # Get the client row from the client database
-    selected_client_info = client_database.loc[client_database["ClientName"] == selected_client]
-
-    
+    selected_client_info = client_database.loc[client_database["ClientName"]
+                                               == selected_client]
 
     # file_path = "C:/Users/kyo_m/Documents/Code/GP 10 input.xlsx"
 
@@ -96,8 +94,6 @@ def main():
 
     # run vba macro to save all word documents
 
-    
-
     finalReport(sampleList, selected_client_info, reference_number)
 
     input("Cell Line ID script has finished running" '\n' "Press any key to exit")
@@ -105,17 +101,16 @@ def main():
 
 def finalReport(listOfSamples, clientInfo, reference_number):
     # Create Replace Dictionary for the final report
-    replaceDict = { "_PIName": clientInfo["PIName"].values[0],
-                    "_ClientName": clientInfo["ClientName"].values[0],
-                    "_ClientEmail": clientInfo["ClientEmail"].values[0],
-                    "_ClientPhoneNumber": clientInfo["ClientPhoneNumber"].values[0],
-                    "_Institution": clientInfo["Institution"].values[0],
-                    "_ReferenceNumber": reference_number,
-                    "_Date": time.strftime("%m/%d/%Y"),
-                    "_SampleNumber": len(listOfSamples),
-                    "_Batches": "1",
-                    }
-
+    replaceDict = {"_PIName": clientInfo["PIName"].values[0],
+                   "_ClientName": clientInfo["ClientName"].values[0],
+                   "_ClientEmail": clientInfo["ClientEmail"].values[0],
+                   "_ClientPhoneNumber": clientInfo["ClientPhoneNumber"].values[0],
+                   "_Institution": clientInfo["Institution"].values[0],
+                   "_ReferenceNumber": reference_number,
+                   "_Date": time.strftime("%m/%d/%Y"),
+                   "_SampleNumber": len(listOfSamples),
+                   "_Batches": "1",
+                   }
 
     # Open the Header and Footer template
     combined_document = docx.Document('ClientTemplate.docx')
@@ -130,7 +125,6 @@ def finalReport(listOfSamples, clientInfo, reference_number):
             combined_document.element.body.append(element)
         combined_document.add_page_break()
 
-
     # Show header and footer from first page in all pages
     for section in combined_document.sections:
         section.different_first_page_header_footer = False
@@ -138,9 +132,10 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # Replace spaces in client name with underscores
     clientFileName = clientInfo["ClientName"].values[0].replace(" ", "_")
 
-    # Save the final report    
-    combined_document.save(clientFileName + "_Cell_Line_ID_" + reference_number + ".docx")
-    
+    # Save the final report
+    combined_document.save(
+        clientFileName + "_Cell_Line_ID_" + reference_number + ".docx")
+
     # Convert the Python dictionary to a VBA dictionary
     vba_dict = win32com.client.Dispatch("Scripting.Dictionary")
 
@@ -150,10 +145,11 @@ def finalReport(listOfSamples, clientInfo, reference_number):
 
     # open word document
     word = win32com.client.DispatchEx("Word.Application")
-    word.Visible = 0 
+    word.Visible = 0
 
-    file_path = os.getcwd() + "/" + clientFileName + "_Cell_Line_ID_" + reference_number + ".docx"
-    
+    file_path = os.getcwd() + "/" + clientFileName + \
+        "_Cell_Line_ID_" + reference_number + ".docx"
+
     doc = word.Documents.Open(file_path, ReadOnly=1)
 
     # Load the VBA code from the file
@@ -169,6 +165,7 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # save and close word document
     doc.Save()
     doc.Close()
+
 
 def selectSample(bestMatchedSamples):
     # Display the best matched samples to the user and ask for user input
@@ -217,6 +214,7 @@ def selectSample(bestMatchedSamples):
 
 
 # Create a submit button, close window when clicked
+
 
     def submit():
         # Get the selected item
@@ -668,6 +666,7 @@ def injectAndRunRedCodeVBA(fileName):
 
 ########################################################################################################################
 
+
 def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
     # Generate Replacement Dictionary for the Template
 
@@ -778,7 +777,6 @@ def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
         for i, allele_column in enumerate(allele_columns, start=1):
             key = f"{marker}_{i}"
 
-
             value = sampleDF.loc[sampleDF["Markers"]
                                  == marker][allele_column].values[0]
             template_dict[key] = value
@@ -795,9 +793,9 @@ def SelectClient():
     # Load Client Data from Excel File and create a dataframe
     client_database = pd.read_excel("CellLineClients.xlsx")
     client_list = client_database["ClientName"].tolist()
-    
-    selected_item   = ""
-    order_number   = ""
+
+    selected_item = ""
+    order_number = ""
 
     def submit():
         nonlocal selected_item
@@ -810,7 +808,6 @@ def SelectClient():
         # Close the window
         root.quit()
         root.destroy()
-
 
     root = tk.Tk()
     root.title("Order Form")
@@ -833,8 +830,6 @@ def SelectClient():
     root.mainloop()
 
     return selected_item, order_number
-
-
 
 ########################################################################################################################
 
