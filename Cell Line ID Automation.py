@@ -1,7 +1,7 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
-# Date: 2023-1-1-19
-# Version: 3.2
+# Date: 2023-May-2
+version = 3.4
 # Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
 # The script will then consolidate the results into a single .docx file
 # Requirements: Selenium, Pandas, BeautifulSoup, docx, tkinter, Firefox, geckodriver.exe
@@ -32,12 +32,11 @@ import os
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
-# Import the webdriver and time modules
 
 
 def main():
     print("Welcome to the ClimaSTR Cell Line ID script" '\n' "Please select the input file from the GMapper Program")
-    print("version 3.2")
+    print("version: " + str(version))
     # get file path from user using tkinter file dialog
     tkinter.Tk().withdraw()
     # open file dialog in current directory and allow excel files only
@@ -50,7 +49,7 @@ def main():
     client_database = pd.read_excel("CellLineClients.xlsx")
 
     # Get the client row from the client database
-    selected_client_info = client_database.loc[client_database["ClientName"]
+    selected_client_info = client_database.loc[client_database["Nickname"]
                                                == selected_client]
 
     # file_path = "C:/Users/kyo_m/Documents/Code/GP 10 input.xlsx"
@@ -71,7 +70,7 @@ def main():
 
     # for each group, perform the selenium script
     for each in grouped_df:
-        # if Test Name is geneprint23
+        # if Test Name is geneprint24
 
         sampleName = each[0]
         sampleDF = each[1]
@@ -112,6 +111,7 @@ def finalReport(listOfSamples, clientInfo, reference_number):
                    "_Batches": "1",
                    }
 
+
     # Open the Header and Footer template
     combined_document = docx.Document('ClientTemplate.docx')
 
@@ -123,14 +123,14 @@ def finalReport(listOfSamples, clientInfo, reference_number):
         temp_doc = docx.Document("CellLineOutput/" + doc + ".docx")
         for element in temp_doc.element.body:
             combined_document.element.body.append(element)
-        combined_document.add_page_break()
+        # combined_document.add_page_break()
 
     # Show header and footer from first page in all pages
     for section in combined_document.sections:
         section.different_first_page_header_footer = False
 
     # Replace spaces in client name with underscores
-    clientFileName = clientInfo["ClientName"].values[0].replace(" ", "_")
+    clientFileName = clientInfo["Nickname"].values[0].replace(" ", "_")
 
     # Save the final report
     combined_document.save(
@@ -350,7 +350,12 @@ def ExpasySTRSearch(sampleName, sampleDF):
     number_of_results = 10
 
     def get_best_match(tableDF, i):
-        bestMatched.append(tableDF.iloc[i])
+        try :
+            bestMatched.append(tableDF.iloc[i])
+        
+        except IndexError:
+            print(tableDF)
+            quit()
 
     bestMatched = []
     threads = []
@@ -444,7 +449,7 @@ def ClimaSTRSearch(sampleName, sampleDF):
 
     # enter email and country and submit
     email = driver.find_element("id", "usr_email")
-    email.send_keys("jin@laragen.com")
+    email.send_keys("info@laragen.com")
     country = driver.find_element("id", "usr_country")
     country.send_keys("United States")
 
@@ -675,6 +680,7 @@ def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
         replacementsDictionary = {
             # Main Info
             "_SAMPLE_NAME": sampleName,
+            "_sampleNumber": 99999999,
             "website": "Clima2",
             "test": sampleDF["Test Name"],
 
@@ -792,16 +798,21 @@ def SelectClient():
 
     # Load Client Data from Excel File and create a dataframe
     client_database = pd.read_excel("CellLineClients.xlsx")
-    client_list = client_database["ClientName"].tolist()
+    client_list = client_database["Nickname"].tolist()
 
     selected_item = ""
     order_number = ""
 
     def submit():
+        # Get the selected client and order number
         nonlocal selected_item
         nonlocal order_number
+
+        # Window Title "Please Select a Client"
+        
         selected_item = listbox.get(listbox.curselection())
         order_number = order_entry.get()
+        
         print("Selected Client:", selected_item)
         print("Order number:", order_number)
 
@@ -811,11 +822,17 @@ def SelectClient():
 
     root = tk.Tk()
     root.title("Order Form")
+    root.geometry("300x300")
 
     # Create a listbox with the client names and a submit button
+    label = tk.Label(root, text="Please Select a Client")
+
+
     listbox = tk.Listbox(root)
     for item in client_list:
         listbox.insert(tk.END, item)
+
+    label.pack()
     listbox.pack()
 
     order_label = tk.Label(root, text="Order Number:")
@@ -831,7 +848,25 @@ def SelectClient():
 
     return selected_item, order_number
 
+class CellLineSample():
+    def __init__(self, sampleName, sampleDF, website, bestMatched):
+        self.sampleName = sampleName
+        self.sampleDF = sampleDF
+        self.website = website
+        self.bestMatched = bestMatched
+
+class CellLineSample_GP10():
+    # Class for the GenePrint10 Samples, inherits from CellLineSample
+    def __init__(self, sampleName, sampleDF, website, bestMatched):
+        CellLineSample.__init__(self, sampleName, sampleDF, website, bestMatched)
+
+
+class CellLineSample_GP24(): 
+    # Class for the GenePrint24 Samples, inherits from CellLineSample
+    def __init__(self, sampleName, sampleDF, website, bestMatched):
+        CellLineSample.__init__(self, sampleName, sampleDF, website, bestMatched)
+
 ########################################################################################################################
 
-
-main()
+if __name__ == "__main__":
+    main()
