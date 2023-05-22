@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 import threading
 import docx
 import tkinter
+from tkinter import messagebox
 import pandas
 import pandas as pd
 from selenium import webdriver
@@ -98,11 +99,8 @@ def main():
 
     finalReport(sampleList, selected_client_info, reference_number)
 
-    input("Cell Line ID script has finished running" '\n' "Press ENTER to exit")
-
-
-
-
+    # input("Cell Line ID script has finished running" '\n' "Press ENTER to exit")
+    show_done_window()
 
 
 
@@ -239,7 +237,7 @@ def selectSample(bestMatchedSamples):
         window.destroy()
         window.quit()
 
-    submit_button = tk.Button(window, text='Submit', command=submit)
+    submit_button = tk.Button(window, text='SELECT RESULT', command=submit)
     tree.pack()
     submit_button.pack()
 
@@ -387,7 +385,7 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
             sampleName, sampleDF, bestMatched, prefix, sampleNumber))
 
     # Create a thread for each call to generateReplacementDictionary
-    for i in range(10):
+    for i in range(len(bestMatched)):
         t = threading.Thread(target=generate_replacement_dictionary_thread, args=(
             sampleName, sampleDF, bestMatched[i], "Expasy"))
         threads.append(t)
@@ -884,6 +882,29 @@ def display_readme():
     # Create a button to show the Read Me message
     readme_button = tk.Button(root, text="Read Me", command=display_readme)
     readme_button.pack(pady=50)
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
+def show_done_window():
+    def show_done_message():
+        messagebox.showinfo("Done", "Cell Line ID script has finished running!")
+        root.destroy()  # Close the "Done" window and exit the program
+
+    # Create the main Tkinter window
+    root = tk.Tk()
+
+    # Set window title and size
+    root.title("Done")
+    root.geometry("300x200")
+
+    # Create a label to display the "Done" message
+    message_label = tk.Label(root, text="Process completed!")
+    message_label.pack(pady=50)
+
+    # Create a button to close the window and exit the program
+    done_button = tk.Button(root, text="Done", command=show_done_message)
+    done_button.pack()
 
     # Start the Tkinter event loop
     root.mainloop()
