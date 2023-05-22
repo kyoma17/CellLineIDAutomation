@@ -55,8 +55,8 @@ def main():
     # file_path = "C:/Users/kyo_m/Documents/Code/GP 10 input.xlsx"
 
     # If the output folder does not exist, create it
-    if not os.path.exists("CellLineOutput"):
-        os.makedirs("CellLineOutput")
+    if not os.path.exists("CellLineTEMP"):
+        os.makedirs("CellLineTEMP")
 
     # read .xlsx into pandas dataframe
     df = pandas.read_excel(file_path)
@@ -68,8 +68,11 @@ def main():
 
     grouped_df = df.groupby("Sample Name")
 
+    sample_counter = 0
+
     # for each group, perform the selenium script
     for each in grouped_df:
+        sample_counter += 1
         # if Test Name is geneprint24
 
         sampleName = each[0]
@@ -81,8 +84,8 @@ def main():
         else:
             print("Processing GP10 " + sampleName + "...")
 
-        expasy_results = ExpasySTRSearch(sampleName, sampleDF)
-        clima_results = ClimaSTRSearch(sampleName, sampleDF)
+        expasy_results = ExpasySTRSearch(sampleName, sampleDF, sample_counter)
+        clima_results = ClimaSTRSearch(sampleName, sampleDF, sample_counter)
 
         # Combine the results from ClimaSTR and ExpasySTR
 
@@ -95,7 +98,12 @@ def main():
 
     finalReport(sampleList, selected_client_info, reference_number)
 
-    input("Cell Line ID script has finished running" '\n' "Press any key to exit")
+    input("Cell Line ID script has finished running" '\n' "Press ENTER to exit")
+
+
+
+
+
 
 
 def finalReport(listOfSamples, clientInfo, reference_number):
@@ -120,7 +128,7 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # add the content of each document to the combined document keep the formatting each document
     # add a page break to the end of each document except the last one
     for doc in listOfSamples:
-        temp_doc = docx.Document("CellLineOutput/" + doc + ".docx")
+        temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
         for element in temp_doc.element.body:
             combined_document.element.body.append(element)
         # combined_document.add_page_break()
@@ -132,9 +140,9 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # Replace spaces in client name with underscores
     clientFileName = clientInfo["Nickname"].values[0].replace(" ", "_")
 
-    # Save the final report
-    combined_document.save(
-        clientFileName + "_Cell_Line_ID_" + reference_number + ".docx")
+    # Save the final report in CellLineOutput folder
+    report_name = "CellLineOutput/" + clientFileName + "_Cell_Line_ID_" + reference_number + ".docx" 
+    combined_document.save(report_name)
 
     # Convert the Python dictionary to a VBA dictionary
     vba_dict = win32com.client.Dispatch("Scripting.Dictionary")
@@ -143,18 +151,19 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     for key in replaceDict:
         vba_dict.Add(key, replaceDict[key])
 
+    # get the absolute path of the word document
+    report_name = os.path.abspath(report_name)
+
     # open word document
     word = win32com.client.DispatchEx("Word.Application")
     word.Visible = 0
 
-    file_path = os.getcwd() + "/" + clientFileName + \
-        "_Cell_Line_ID_" + reference_number + ".docx"
-
-    doc = word.Documents.Open(file_path, ReadOnly=1)
+    doc = word.Documents.Open(report_name, ReadOnly=1  )
 
     # Load the VBA code from the file
     with open("CellLineOutputVBA.bas", "r") as f:
         vbaCode = f.read()
+
 
     # Inject vba script into word document
     doc.VBProject.VBComponents.Add(1).CodeModule.AddFromString(vbaCode)
@@ -239,7 +248,7 @@ def selectSample(bestMatchedSamples):
 
 
 ############################################################################################################
-def ExpasySTRSearch(sampleName, sampleDF):
+def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     # Takes in a pandas dataframe of a single sample and performs the selenium script against Expasy
     # Will return a pandas dataframe of the results of web scraping
 
@@ -375,7 +384,7 @@ def ExpasySTRSearch(sampleName, sampleDF):
     # Create a function to run in a separate thread
     def generate_replacement_dictionary_thread(sampleName, sampleDF, bestMatched, prefix):
         replacementsDictionaries.append(generateReplacementDictionary(
-            sampleName, sampleDF, bestMatched, prefix))
+            sampleName, sampleDF, bestMatched, prefix, sampleNumber))
 
     # Create a thread for each call to generateReplacementDictionary
     for i in range(10):
@@ -394,7 +403,7 @@ def ExpasySTRSearch(sampleName, sampleDF):
     return replacementsDictionaries
 
 
-def ClimaSTRSearch(sampleName, sampleDF):
+def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     # Takes in a pandas dataframe of a single sample and performs the selenium script against Clima
     # Will return a pandas dataframe of the results of web scraping
 
@@ -518,7 +527,7 @@ def ClimaSTRSearch(sampleName, sampleDF):
     # Create a function to run in a separate thread
     def generate_replacement_dictionary_thread(sampleName, sampleDF, bestMatched, prefix):
         replacementsDictionaries.append(generateReplacementDictionary(
-            sampleName, sampleDF, bestMatched, prefix))
+            sampleName, sampleDF, bestMatched, prefix, sampleNumber))
 
     # Create a thread for each call to generateReplacementDictionary
     for i in range(number_of_results):
@@ -629,10 +638,10 @@ def fillTemplate(replacementsDictionary):
 
     # Inject and run VBA code to the document
 
-    # Save the modified document to the CellLineOutput folder in the current directory
-    document.save('CellLineOutput/' + sampleName + '.docx')
+    # Save the modified document to the CellLineTEMP folder in the current directory
+    document.save('CellLineTEMP/' + sampleName + '.docx')
 
-    injectAndRunRedCodeVBA('CellLineOutput/' + sampleName + '.docx')
+    injectAndRunRedCodeVBA('CellLineTEMP/' + sampleName + '.docx')
 
     print("Done with " + sampleName)
     # Print line empty line
@@ -663,7 +672,7 @@ def injectAndRunRedCodeVBA(fileName):
     # Run the VBA code
     word.Run("ChangeMatchingToRed")
 
-    # Save the document
+    # Save the document 
     doc.Save()
 
     # Close the document
@@ -672,7 +681,7 @@ def injectAndRunRedCodeVBA(fileName):
 ########################################################################################################################
 
 
-def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
+def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website, sampleNumber):
     # Generate Replacement Dictionary for the Template
 
     # Clima dictionary for the template
@@ -680,7 +689,7 @@ def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
         replacementsDictionary = {
             # Main Info
             "_SAMPLE_NAME": sampleName,
-            "_sampleNumber": 99999999,
+            "_sampleNumber": sampleNumber,
             "website": "Clima2",
             "test": sampleDF["Test Name"],
 
@@ -855,16 +864,29 @@ class CellLineSample():
         self.website = website
         self.bestMatched = bestMatched
 
-class CellLineSample_GP10():
-    # Class for the GenePrint10 Samples, inherits from CellLineSample
-    def __init__(self, sampleName, sampleDF, website, bestMatched):
-        CellLineSample.__init__(self, sampleName, sampleDF, website, bestMatched)
 
 
-class CellLineSample_GP24(): 
-    # Class for the GenePrint24 Samples, inherits from CellLineSample
-    def __init__(self, sampleName, sampleDF, website, bestMatched):
-        CellLineSample.__init__(self, sampleName, sampleDF, website, bestMatched)
+def display_readme():
+    try:
+        with open('readme.txt', 'r') as file:
+            readme_content = file.read()
+            messagebox.showinfo("Read Me", readme_content)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "readme.txt not found.")
+
+    # Create the main Tkinter window
+    root = tk.Tk()
+
+    # Set window title and size
+    root.title("My Program")
+    root.geometry("300x200")
+
+    # Create a button to show the Read Me message
+    readme_button = tk.Button(root, text="Read Me", command=display_readme)
+    readme_button.pack(pady=50)
+
+    # Start the Tkinter event loop
+    root.mainloop()
 
 ########################################################################################################################
 
