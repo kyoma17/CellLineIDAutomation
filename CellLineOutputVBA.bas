@@ -1,7 +1,6 @@
-'Written by Kenny Ma
-'Last Modified: 2023-01-14
-
-
+' Written by Kenny Ma
+' Last Modified: 2023-01-14
+' Replace the keywords in the header with the replacement text
 
 Sub ReplaceHeaderKeyword(replacement_dictionary As object)
     ' This maco replaces the keywords in the header with the replacement text
@@ -29,8 +28,4 @@ Sub CombineAllCellID()
         doc.Range.End = doc.Range.End + 1
         doc.Range.End.InsertFile file
     Next
-
-    
-
-
 End Sub

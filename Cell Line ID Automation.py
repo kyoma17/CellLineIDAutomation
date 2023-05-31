@@ -1,7 +1,7 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
-# Date: 2023-1-1-19
-# Version: 3.2
+# Date: 2023-May-29
+version = 3.5
 # Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
 # The script will then consolidate the results into a single .docx file
 # Requirements: Selenium, Pandas, BeautifulSoup, docx, tkinter, Firefox, geckodriver.exe
@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 import threading
 import docx
 import tkinter
+from tkinter import messagebox
 import pandas
 import pandas as pd
 from selenium import webdriver
@@ -29,15 +30,16 @@ import time
 import warnings
 import win32com.client
 import os
+import psutil
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
-# Import the webdriver and time modules
 
 
 def main():
+    close_word_processes()
     print("Welcome to the ClimaSTR Cell Line ID script" '\n' "Please select the input file from the GMapper Program")
-    print("version 3.2")
+    print("version: " + str(version))
     # get file path from user using tkinter file dialog
     tkinter.Tk().withdraw()
     # open file dialog in current directory and allow excel files only
@@ -50,14 +52,14 @@ def main():
     client_database = pd.read_excel("CellLineClients.xlsx")
 
     # Get the client row from the client database
-    selected_client_info = client_database.loc[client_database["ClientName"]
+    selected_client_info = client_database.loc[client_database["Nickname"]
                                                == selected_client]
 
     # file_path = "C:/Users/kyo_m/Documents/Code/GP 10 input.xlsx"
 
     # If the output folder does not exist, create it
-    if not os.path.exists("CellLineOutput"):
-        os.makedirs("CellLineOutput")
+    if not os.path.exists("CellLineTEMP"):
+        os.makedirs("CellLineTEMP")
 
     # read .xlsx into pandas dataframe
     df = pandas.read_excel(file_path)
@@ -69,11 +71,18 @@ def main():
 
     grouped_df = df.groupby("Sample Name")
 
+    sample_counter = 0
+    sample_order = []
+
     # for each group, perform the selenium script
     for each in grouped_df:
-        # if Test Name is geneprint23
+        sample_counter += 1
+
+        # sample_counter = "#"
+        # if Test Name is geneprint24
 
         sampleName = each[0]
+        sample_order.append(sampleName)
         sampleDF = each[1]
         testName = each[1]["Test Name"].values
 
@@ -82,8 +91,8 @@ def main():
         else:
             print("Processing GP10 " + sampleName + "...")
 
-        expasy_results = ExpasySTRSearch(sampleName, sampleDF)
-        clima_results = ClimaSTRSearch(sampleName, sampleDF)
+        expasy_results = ExpasySTRSearch(sampleName, sampleDF, sample_counter)
+        clima_results = ClimaSTRSearch(sampleName, sampleDF, sample_counter)
 
         # Combine the results from ClimaSTR and ExpasySTR
 
@@ -91,16 +100,28 @@ def main():
 
         # Display the best matched samples to the user and ask for user input
         selectSample(results)
+        close_microsoft_word()
 
     # run vba macro to save all word documents
 
-    finalReport(sampleList, selected_client_info, reference_number)
+    finalReport(sample_order, selected_client_info, reference_number)
 
-    input("Cell Line ID script has finished running" '\n' "Press any key to exit")
+    # input("Cell Line ID script has finished running" '\n' "Press ENTER to exit")
+    show_done_window()
+
+def close_word_processes():
+    for process in psutil.process_iter(['pid', 'name']):
+        if process.info['name'] == 'WINWORD.EXE':  # Check for the Word process name
+            try:
+                process.kill()  # Terminate the Word process
+                print(f"Closed Word process with PID: {process.info['pid']}")
+            except psutil.AccessDenied:
+                print(f"Access denied to terminate Word process with PID: {process.info['pid']}")
 
 
 def finalReport(listOfSamples, clientInfo, reference_number):
     # Create Replace Dictionary for the final report
+    # This dictionary is for the Header in the Paperwork
     replaceDict = {"_PIName": clientInfo["PIName"].values[0],
                    "_ClientName": clientInfo["ClientName"].values[0],
                    "_ClientEmail": clientInfo["ClientEmail"].values[0],
@@ -112,6 +133,7 @@ def finalReport(listOfSamples, clientInfo, reference_number):
                    "_Batches": "1",
                    }
 
+
     # Open the Header and Footer template
     combined_document = docx.Document('ClientTemplate.docx')
 
@@ -120,21 +142,21 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # add the content of each document to the combined document keep the formatting each document
     # add a page break to the end of each document except the last one
     for doc in listOfSamples:
-        temp_doc = docx.Document("CellLineOutput/" + doc + ".docx")
+        temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
         for element in temp_doc.element.body:
             combined_document.element.body.append(element)
-        combined_document.add_page_break()
+        # combined_document.add_page_break()
 
     # Show header and footer from first page in all pages
     for section in combined_document.sections:
         section.different_first_page_header_footer = False
 
     # Replace spaces in client name with underscores
-    clientFileName = clientInfo["ClientName"].values[0].replace(" ", "_")
+    clientFileName = clientInfo["Nickname"].values[0].replace(" ", "_")
 
-    # Save the final report
-    combined_document.save(
-        clientFileName + "_Cell_Line_ID_" + reference_number + ".docx")
+    # Save the final report in CellLineOutput folder
+    report_name = "CellLineOutput/" + clientFileName + "_Cell_Line_ID_" + reference_number + ".docx" 
+    combined_document.save(report_name)
 
     # Convert the Python dictionary to a VBA dictionary
     vba_dict = win32com.client.Dispatch("Scripting.Dictionary")
@@ -143,18 +165,19 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     for key in replaceDict:
         vba_dict.Add(key, replaceDict[key])
 
+    # get the absolute path of the word document
+    report_name = os.path.abspath(report_name)
+
     # open word document
     word = win32com.client.DispatchEx("Word.Application")
     word.Visible = 0
 
-    file_path = os.getcwd() + "/" + clientFileName + \
-        "_Cell_Line_ID_" + reference_number + ".docx"
-
-    doc = word.Documents.Open(file_path, ReadOnly=1)
+    doc = word.Documents.Open(report_name, ReadOnly=1  )
 
     # Load the VBA code from the file
     with open("CellLineOutputVBA.bas", "r") as f:
         vbaCode = f.read()
+
 
     # Inject vba script into word document
     doc.VBProject.VBComponents.Add(1).CodeModule.AddFromString(vbaCode)
@@ -165,6 +188,14 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # save and close word document
     doc.Save()
     doc.Close()
+
+def close_microsoft_word():
+    # close word application if it is open
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Quit()
+    except:
+        pass
 
 
 def selectSample(bestMatchedSamples):
@@ -230,7 +261,7 @@ def selectSample(bestMatchedSamples):
         window.destroy()
         window.quit()
 
-    submit_button = tk.Button(window, text='Submit', command=submit)
+    submit_button = tk.Button(window, text='SELECT RESULT', command=submit)
     tree.pack()
     submit_button.pack()
 
@@ -239,7 +270,7 @@ def selectSample(bestMatchedSamples):
 
 
 ############################################################################################################
-def ExpasySTRSearch(sampleName, sampleDF):
+def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     # Takes in a pandas dataframe of a single sample and performs the selenium script against Expasy
     # Will return a pandas dataframe of the results of web scraping
 
@@ -350,7 +381,12 @@ def ExpasySTRSearch(sampleName, sampleDF):
     number_of_results = 10
 
     def get_best_match(tableDF, i):
-        bestMatched.append(tableDF.iloc[i])
+        try :
+            bestMatched.append(tableDF.iloc[i])
+        
+        except IndexError:
+            print(tableDF)
+            quit()
 
     bestMatched = []
     threads = []
@@ -370,10 +406,10 @@ def ExpasySTRSearch(sampleName, sampleDF):
     # Create a function to run in a separate thread
     def generate_replacement_dictionary_thread(sampleName, sampleDF, bestMatched, prefix):
         replacementsDictionaries.append(generateReplacementDictionary(
-            sampleName, sampleDF, bestMatched, prefix))
+            sampleName, sampleDF, bestMatched, prefix, sampleNumber))
 
     # Create a thread for each call to generateReplacementDictionary
-    for i in range(10):
+    for i in range(len(bestMatched)):
         t = threading.Thread(target=generate_replacement_dictionary_thread, args=(
             sampleName, sampleDF, bestMatched[i], "Expasy"))
         threads.append(t)
@@ -389,7 +425,7 @@ def ExpasySTRSearch(sampleName, sampleDF):
     return replacementsDictionaries
 
 
-def ClimaSTRSearch(sampleName, sampleDF):
+def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     # Takes in a pandas dataframe of a single sample and performs the selenium script against Clima
     # Will return a pandas dataframe of the results of web scraping
 
@@ -444,7 +480,7 @@ def ClimaSTRSearch(sampleName, sampleDF):
 
     # enter email and country and submit
     email = driver.find_element("id", "usr_email")
-    email.send_keys("jin@laragen.com")
+    email.send_keys("info@laragen.com")
     country = driver.find_element("id", "usr_country")
     country.send_keys("United States")
 
@@ -513,7 +549,7 @@ def ClimaSTRSearch(sampleName, sampleDF):
     # Create a function to run in a separate thread
     def generate_replacement_dictionary_thread(sampleName, sampleDF, bestMatched, prefix):
         replacementsDictionaries.append(generateReplacementDictionary(
-            sampleName, sampleDF, bestMatched, prefix))
+            sampleName, sampleDF, bestMatched, prefix, sampleNumber))
 
     # Create a thread for each call to generateReplacementDictionary
     for i in range(number_of_results):
@@ -624,10 +660,10 @@ def fillTemplate(replacementsDictionary):
 
     # Inject and run VBA code to the document
 
-    # Save the modified document to the CellLineOutput folder in the current directory
-    document.save('CellLineOutput/' + sampleName + '.docx')
+    # Save the modified document to the CellLineTEMP folder in the current directory
+    document.save('CellLineTEMP/' + sampleName + '.docx')
 
-    injectAndRunRedCodeVBA('CellLineOutput/' + sampleName + '.docx')
+    injectAndRunRedCodeVBA('CellLineTEMP/' + sampleName + '.docx')
 
     print("Done with " + sampleName)
     # Print line empty line
@@ -645,8 +681,8 @@ def injectAndRunRedCodeVBA(fileName):
     # Open the document with win32com turn on the visible mode
     word = win32com.client.DispatchEx("Word.Application")
 
-    # Open the document
-    doc = word.Documents.Open(filePath, ReadOnly=1)
+    # Open the document in read only mode
+    doc = word.Documents.Open(filePath, ReadOnly=True)
 
     # Load the VBA code from the file
     with open("CellLineRed.bas", "r") as f:
@@ -658,16 +694,19 @@ def injectAndRunRedCodeVBA(fileName):
     # Run the VBA code
     word.Run("ChangeMatchingToRed")
 
-    # Save the document
+    # Save the document 
     doc.Save()
 
     # Close the document
     doc.Close()
 
+    # Quit the word application
+    word.Quit()
+
 ########################################################################################################################
 
 
-def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
+def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website, sampleNumber):
     # Generate Replacement Dictionary for the Template
 
     # Clima dictionary for the template
@@ -675,6 +714,7 @@ def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website):
         replacementsDictionary = {
             # Main Info
             "_SAMPLE_NAME": sampleName,
+            "_sampleNumber": sampleNumber,
             "website": "Clima2",
             "test": sampleDF["Test Name"],
 
@@ -792,16 +832,21 @@ def SelectClient():
 
     # Load Client Data from Excel File and create a dataframe
     client_database = pd.read_excel("CellLineClients.xlsx")
-    client_list = client_database["ClientName"].tolist()
+    client_list = client_database["Nickname"].tolist()
 
     selected_item = ""
     order_number = ""
 
     def submit():
+        # Get the selected client and order number
         nonlocal selected_item
         nonlocal order_number
+
+        # Window Title "Please Select a Client"
+        
         selected_item = listbox.get(listbox.curselection())
         order_number = order_entry.get()
+        
         print("Selected Client:", selected_item)
         print("Order number:", order_number)
 
@@ -811,11 +856,17 @@ def SelectClient():
 
     root = tk.Tk()
     root.title("Order Form")
+    root.geometry("300x300")
 
     # Create a listbox with the client names and a submit button
+    label = tk.Label(root, text="Please Select a Client")
+
+
     listbox = tk.Listbox(root)
     for item in client_list:
         listbox.insert(tk.END, item)
+
+    label.pack()
     listbox.pack()
 
     order_label = tk.Label(root, text="Order Number:")
@@ -831,7 +882,61 @@ def SelectClient():
 
     return selected_item, order_number
 
+class CellLineSample():
+    def __init__(self, sampleName, sampleDF, website, bestMatched):
+        self.sampleName = sampleName
+        self.sampleDF = sampleDF
+        self.website = website
+        self.bestMatched = bestMatched
+
+
+
+def display_readme():
+    try:
+        with open('readme.txt', 'r') as file:
+            readme_content = file.read()
+            messagebox.showinfo("Read Me", readme_content)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "readme.txt not found.")
+
+    # Create the main Tkinter window
+    root = tk.Tk()
+
+    # Set window title and size
+    root.title("My Program")
+    root.geometry("300x200")
+
+    # Create a button to show the Read Me message
+    readme_button = tk.Button(root, text="Read Me", command=display_readme)
+    readme_button.pack(pady=50)
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
+def show_done_window():
+    def show_done_message():
+        messagebox.showinfo("Done", "Cell Line ID script has finished running!")
+        root.destroy()  # Close the "Done" window and exit the program
+
+    # Create the main Tkinter window
+    root = tk.Tk()
+
+    # Set window title and size
+    root.title("Done")
+    root.geometry("300x200")
+
+    # Create a label to display the "Done" message
+    message_label = tk.Label(root, text="Process completed!")
+    message_label.pack(pady=50)
+
+    # Create a button to close the window and exit the program
+    done_button = tk.Button(root, text="Done", command=show_done_message)
+    done_button.pack()
+
+    # Start the Tkinter event loop
+    root.mainloop()
+
 ########################################################################################################################
 
-
-main()
+if __name__ == "__main__":
+    main()
