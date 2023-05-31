@@ -30,12 +30,14 @@ import time
 import warnings
 import win32com.client
 import os
+import psutil
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def main():
+    close_word_processes()
     print("Welcome to the ClimaSTR Cell Line ID script" '\n' "Please select the input file from the GMapper Program")
     print("version: " + str(version))
     # get file path from user using tkinter file dialog
@@ -70,13 +72,17 @@ def main():
     grouped_df = df.groupby("Sample Name")
 
     sample_counter = 0
+    sample_order = []
 
     # for each group, perform the selenium script
     for each in grouped_df:
         sample_counter += 1
+
+        # sample_counter = "#"
         # if Test Name is geneprint24
 
         sampleName = each[0]
+        sample_order.append(sampleName)
         sampleDF = each[1]
         testName = each[1]["Test Name"].values
 
@@ -94,18 +100,28 @@ def main():
 
         # Display the best matched samples to the user and ask for user input
         selectSample(results)
+        close_microsoft_word()
 
     # run vba macro to save all word documents
 
-    finalReport(sampleList, selected_client_info, reference_number)
+    finalReport(sample_order, selected_client_info, reference_number)
 
     # input("Cell Line ID script has finished running" '\n' "Press ENTER to exit")
     show_done_window()
 
+def close_word_processes():
+    for process in psutil.process_iter(['pid', 'name']):
+        if process.info['name'] == 'WINWORD.EXE':  # Check for the Word process name
+            try:
+                process.kill()  # Terminate the Word process
+                print(f"Closed Word process with PID: {process.info['pid']}")
+            except psutil.AccessDenied:
+                print(f"Access denied to terminate Word process with PID: {process.info['pid']}")
 
 
 def finalReport(listOfSamples, clientInfo, reference_number):
     # Create Replace Dictionary for the final report
+    # This dictionary is for the Header in the Paperwork
     replaceDict = {"_PIName": clientInfo["PIName"].values[0],
                    "_ClientName": clientInfo["ClientName"].values[0],
                    "_ClientEmail": clientInfo["ClientEmail"].values[0],
@@ -172,6 +188,14 @@ def finalReport(listOfSamples, clientInfo, reference_number):
     # save and close word document
     doc.Save()
     doc.Close()
+
+def close_microsoft_word():
+    # close word application if it is open
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Quit()
+    except:
+        pass
 
 
 def selectSample(bestMatchedSamples):
@@ -657,8 +681,8 @@ def injectAndRunRedCodeVBA(fileName):
     # Open the document with win32com turn on the visible mode
     word = win32com.client.DispatchEx("Word.Application")
 
-    # Open the document
-    doc = word.Documents.Open(filePath, ReadOnly=1)
+    # Open the document in read only mode
+    doc = word.Documents.Open(filePath, ReadOnly=True)
 
     # Load the VBA code from the file
     with open("CellLineRed.bas", "r") as f:
@@ -675,6 +699,9 @@ def injectAndRunRedCodeVBA(fileName):
 
     # Close the document
     doc.Close()
+
+    # Quit the word application
+    word.Quit()
 
 ########################################################################################################################
 
