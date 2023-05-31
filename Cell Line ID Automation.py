@@ -1,7 +1,7 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
-# Date: 2023-May-2
-version = 3.4
+# Date: 2023-May-29
+version = 3.5
 # Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
 # The script will then consolidate the results into a single .docx file
 # Requirements: Selenium, Pandas, BeautifulSoup, docx, tkinter, Firefox, geckodriver.exe
