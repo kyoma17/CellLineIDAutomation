@@ -12,7 +12,14 @@ def selectSample(bestMatchedSamples, sampleName):
     window = tk.Tk()
     window.title("Select Best Result for " + sampleName)
     window.columnconfigure(0, minsize=250, weight=1)
-    window.rowconfigure([0, 1], minsize=100, weight=1)
+    window.rowconfigure([0, 1], minsize=200, weight=1)
+
+    # # Center window in the left of the screen
+    # windowWidth = window.winfo_reqwidth()
+    # positionRight = int(window.winfo_screenwidth() / 2 - windowWidth / 2)
+    # positionDown = int(window.winfo_screenheight() / 2 - windowHeight / 2)
+    # window.geometry("+{}+{}".format(positionRight, positionDown))
+    # window.geometry("{}x{}".format(windowWidth, windowHeight))
 
     tree = ttk.Treeview(window)
 
@@ -55,8 +62,6 @@ def selectSample(bestMatchedSamples, sampleName):
         tree.insert("", i, text=name, values=(name, data["_dataset"], data["_bMatchScore"], data["_bMatchName"], data["_bMatchCellLineNo"], data["D5S818_bM"],
                     data["D13S317_bM"], data["D7S820_bM"], data["D16S539_bM"], data["vWA_bM"], data["TH01_bM"], data["AMEL_bM"], data["TPOX_bM"], data["CSF1PO_bM"], data["D21S11_bM"]))
 
-
-        
 
 # Create a submit button, close window when clicked
     def submit():

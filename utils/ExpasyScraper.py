@@ -3,6 +3,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver import ActionChains
 from selenium.webdriver.firefox.options import Options
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 import pandas
 import time
 from bs4 import BeautifulSoup
@@ -56,7 +59,10 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
 
     # go to the Expasy STR website
     driver.get("https://www.cellosaurus.org/str-search/")
-    time.sleep(waitTime)
+
+    # Wait for the page to load
+    WebDriverWait(driver, waitTime).until(EC.element_to_be_clickable((By.ID, "search")))
+
 
     print("Collecting data for sample " + sampleName + " from Expasy...")
     # Click Checkboxes if GP24
@@ -89,8 +95,12 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     driver.find_element("id", "search").click()
 
     # Wait for the results to load
-    time.sleep(waitTime)
-
+    try:   
+        WebDriverWait(driver, waitTime).until(EC.element_to_be_clickable((By.ID, "export")))
+    except:
+        # print("Timeout for " + sampleName + " from Expasy STR Search")
+        pass
+    
     # if no results, return empty list of empty dictionary
 
     warning_element = driver.find_element("id", "warning")
@@ -101,7 +111,6 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
         return []
 
     # if "Warning:" in driver.page_source or "The query returned no results." in driver.page_source:
-
     table = driver.find_element("id", "table-results")
     html = table.get_attribute("outerHTML")
     soup = BeautifulSoup(html, "html.parser")

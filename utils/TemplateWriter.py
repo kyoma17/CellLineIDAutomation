@@ -39,8 +39,7 @@ def fillTemplate(replacementsDictionary):
                                     # run color replacement
                                     NumbersToColorRed = []
                                     # Get the value of the key and seperate by comma
-                                    dictionaryValue = replacementsDictionary[key].split(
-                                        ",")
+                                    dictionaryValue = replacementsDictionary[key].split(",")
 
                                     textToReplaceWith = replacementsDictionary[key]
 
@@ -122,7 +121,7 @@ def injectAndRunRedCodeVBA(fileName):
     doc = word.Documents.Open(filePath, ReadOnly=True)
 
     # Load the VBA code from the file
-    with open("MSO/CellLineRed.bas", "r") as f:
+    with open("MSO/RedHighlighter.bas", "r") as f:
         vbaCode = f.read()
 
     # Inject the VBA code to the document

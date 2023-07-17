@@ -1,7 +1,7 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
-Date =  "2023-July-6"
-version = 3.6
+Date =  "2023-July-16"
+version = "3.6.1"
 # This is the Main Operating Script for the Cell Line ID Automation Program
 
 # Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
@@ -66,6 +66,7 @@ def main():
     # Bulk select the samples
     for each in result_collection:
         results = each[0]
+        
         sampleName = each[1]
 
         selectSample(results, sampleName)
@@ -76,6 +77,7 @@ def main():
 
     # Script is finished
     print("Script is finished. Please check the output folder for the results.")
+    input("Press Enter to exit...")
     quit()
 
 

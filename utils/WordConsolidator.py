@@ -55,8 +55,8 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     # open word document
     word = win32com.client.DispatchEx("Word.Application")
     word.Visible = 0
-
-    doc = word.Documents.Open(report_name, ReadOnly=1  )
+    print(report_name)
+    doc = word.Documents.Open(report_name, ReadOnly=1)
 
     # Load the Header Editor VBA code from the file
     with open("MSO/HeaderEditor.bas", "r") as f:
@@ -77,3 +77,4 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     # save and close word document
     doc.Save()
     doc.Close()
+

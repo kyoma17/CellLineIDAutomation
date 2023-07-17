@@ -3,6 +3,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver import ActionChains
 from selenium.webdriver.firefox.options import Options
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 import pandas
 import time
 from bs4 import BeautifulSoup
@@ -40,7 +43,10 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
 
     # Open a web browser and navigate to the website
     driver.get('http://bioinformatics.hsanmartino.it/clima2/index.php')
-    time.sleep(waitTime)
+    
+    # Wait for the page to load
+    WebDriverWait(driver, waitTime).until(EC.presence_of_element_located((By.ID, "usr_email")))
+
 
     print("Collecting data for sample " + sampleName + " from Clima...")
 
@@ -73,7 +79,8 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     submit_button.click()
 
     # Wait for the page to load
-    time.sleep(waitTime)
+    WebDriverWait(driver, waitTime).until(EC.presence_of_element_located((By.XPATH, "(//table)[3]")))
+    
 
     # retreive table from webpage and convert to pandas dataframe
     table = driver.find_element(By.XPATH, "(//table)[3]")
