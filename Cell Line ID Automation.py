@@ -1,7 +1,7 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
 Date =  "2023-September-8"
-version = "3.6.3"
+version = "3.7"
 # This is the Main Operating Script for the Cell Line ID Automation Program
 
 # Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
