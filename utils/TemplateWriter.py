@@ -10,8 +10,6 @@ def fillTemplate(replacementsDictionary):
     # Helper function to fill the template with the data from the dictionary
     sampleName = replacementsDictionary["_SAMPLE_NAME"]
 
-    close_word_processes()
-
     # Determine which template to use based on the test name
     if replacementsDictionary["test"].values[0] == "GenePrint_24_POP7_Panels_v1.0":
         document = docx.Document('CellLineTemplateGP24.docx')
@@ -35,12 +33,13 @@ def fillTemplate(replacementsDictionary):
                                                  "vWA_bM", "TH01_bM", "AMEL_bM", "TPOX_bM", "CSF1PO_bM", "D21S11_bM"]
 
                                 if key in keys_to_check:
-
+                                    # SKIP if the value is None or nan
+                                    if replacementsDictionary[key] is None or pandas.isna(replacementsDictionary[key]):
+                                        continue
                                     # run color replacement
                                     NumbersToColorRed = []
                                     # Get the value of the key and seperate by comma
                                     dictionaryValue = replacementsDictionary[key].split(",")
-
                                     textToReplaceWith = replacementsDictionary[key]
 
                                     alleleLookupValue1 = replacementsDictionary[key[:-3] + "_1"]
@@ -140,20 +139,3 @@ def injectAndRunRedCodeVBA(fileName):
     word.Quit()
 
 ########################################################################################################################
-def close_word_processes():
-    for process in psutil.process_iter(['pid', 'name']):
-        if process.info['name'] == 'WINWORD.EXE':  # Check for the Word process name
-            try:
-                process.kill()  # Terminate the Word process
-                print(f"Closed Word process with PID: {process.info['pid']}")
-            except psutil.AccessDenied:
-                print(f"Access denied to terminate Word process with PID: {process.info['pid']}")
-
-
-def close_microsoft_word():
-    # close word application if it is open
-    try:
-        word = win32com.client.DispatchEx("Word.Application")
-        word.Quit()
-    except:
-        pass

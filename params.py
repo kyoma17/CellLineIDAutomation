@@ -10,8 +10,10 @@ waitTime = 10
 # Too many threads will cause the Clima or Expasy server to not respond quickly enough
 MaxThreads = 10
 
+# Allows Selenium to run in the background without opening a browser window
+Headless = True
+
 # File Paths
 
-
-# For Development Purposes
+# For Development and Debugging Purposes
 debug = False

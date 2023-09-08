@@ -8,11 +8,29 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 from utils.ClimaScraper import ClimaSTRSearch
 from utils.ExpasyScraper import ExpasySTRSearch
+from params import MaxThreads
+import pandas as pd
 
-def processSamples(df, max_threads=10):
+def check_allele_empty(df):
+    # Define columns to process
+    allele_cols = ['Allele1', 'Allele2', 'Allele3', 'Allele4']
+
+    # check if all allele columns are empty
+    if df[allele_cols].isnull().all().all():
+        return True
+    else:
+        return False
+
+def processSamples(df, max_threads=MaxThreads):
+    df = remove_trailing_zeros(df)
+    remove_OL(df)
+
+
     sampleList = df["Sample Name"].unique()
 
     grouped_df = df.groupby("Sample Name", sort=False)
+
+    print("Processing " + str(len(sampleList)) + " samples..." + '\n')
 
     sample_counter = 0
     sample_order = []
@@ -39,6 +57,8 @@ def processSamples(df, max_threads=10):
 
         # Create a ThreadPoolExecutor with 2 threads
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+ 
+
             # Submit the tasks to the executor
             expasy_future = executor.submit(ExpasySTRSearch, sampleName, sampleDF, sample_counter)
             clima_future = executor.submit(ClimaSTRSearch, sampleName, sampleDF, sample_counter)
@@ -61,7 +81,7 @@ def processSamples(df, max_threads=10):
         results_queue = queue.Queue()
         threads = []
 
-        for each in grouped_df:
+        for each in grouped_df:            
             sample_counter += 1
             sampleName = each[0]
             sample_order.append(sampleName)
@@ -82,34 +102,6 @@ def processSamples(df, max_threads=10):
     process_grouped_df(grouped_df)
 
     return result_collection, sample_order 
-
-############################################################################################################
-    # Selenium Script for Single Threaded Processing
-    # for each in grouped_df:
-    #     sample_counter += 1
-
-    #     # sample_counter = "#"
-    #     # if Test Name is geneprint24
-
-    #     sampleName = each[0]
-    #     sample_order.append(sampleName)
-    #     sampleDF = each[1]
-    #     testName = each[1]["Test Name"].values
-
-    #     if "GenePrint_24_POP7_Panels_v1.0" in testName:
-    #         print("Processing GP24 " + sampleName + "...")
-    #     else:
-    #         print("Processing GP10 " + sampleName + "...")
-
-    #     expasy_results = ExpasySTRSearch(sampleName, sampleDF, sample_counter)
-    #     clima_results = ClimaSTRSearch(sampleName, sampleDF, sample_counter)
-
-    #     # Combine the results from ClimaSTR and ExpasySTR
-    #     results = clima_results + expasy_results
-
-    #     # Add the results to the result collection for bulk selection
-    #     result_collection.append([results, sampleName])
-        # print('\n')
 
 
 def processSamplesRetired(df):
@@ -165,3 +157,53 @@ def processSamplesRetired(df):
     process_grouped_df(grouped_df)
 
     return result_collection, sample_order
+
+####Helper Functions#####################################################################################################
+def remove_trailing_zeros(df):
+    # Define columns to process
+    allele_cols = ['Allele1', 'Allele2', 'Allele3', 'Allele4']
+
+    # Process each column
+    for col in allele_cols:
+        # Convert numbers with trailing .0 to integer, but keep NaN as NaN
+        df[col] = df[col].apply(lambda x: str(x).replace('.0', '') if pd.notna(x) else x)
+
+    return df
+
+def remove_OL(df):
+    # remove "OL" from the allele columns replace with ''
+    allele_cols = ['Allele1', 'Allele2', 'Allele3', 'Allele4']
+
+    # Process each column
+    for col in allele_cols:
+        df[col] = df[col].apply(lambda x: str(x).replace('OL', '') if pd.notna(x) else x)
+
+
+############################################################################################################
+    # Selenium Script for Single Threaded Processing
+    # for each in grouped_df:
+    #     sample_counter += 1
+
+    #     # sample_counter = "#"
+    #     # if Test Name is geneprint24
+
+    #     sampleName = each[0]
+    #     sample_order.append(sampleName)
+    #     sampleDF = each[1]
+    #     testName = each[1]["Test Name"].values
+
+    #     if "GenePrint_24_POP7_Panels_v1.0" in testName:
+    #         print("Processing GP24 " + sampleName + "...")
+    #     else:
+    #         print("Processing GP10 " + sampleName + "...")
+
+    #     expasy_results = ExpasySTRSearch(sampleName, sampleDF, sample_counter)
+    #     clima_results = ClimaSTRSearch(sampleName, sampleDF, sample_counter)
+
+    #     # Combine the results from ClimaSTR and ExpasySTR
+    #     results = clima_results + expasy_results
+
+    #     # Add the results to the result collection for bulk selection
+    #     result_collection.append([results, sampleName])
+        # print('\n')
+

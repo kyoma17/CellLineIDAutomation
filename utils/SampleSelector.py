@@ -7,6 +7,9 @@ import os
 import psutil
 from utils.TemplateWriter import fillTemplate
 
+from params import debug
+
+
 def selectSample(bestMatchedSamples, sampleName):
     # Display the best matched samples to the user and ask for user input
     window = tk.Tk()
@@ -63,20 +66,57 @@ def selectSample(bestMatchedSamples, sampleName):
                     data["D13S317_bM"], data["D7S820_bM"], data["D16S539_bM"], data["vWA_bM"], data["TH01_bM"], data["AMEL_bM"], data["TPOX_bM"], data["CSF1PO_bM"], data["D21S11_bM"]))
 
 
+    selected_result = None
+
 # Create a submit button, close window when clicked
     def submit():
         # Get the selected item
         item = tree.selection()[0]
         # Print the Name of the selected item
         selection = tree.item(item, "values")[0]
-        print("Selected result: ", selection, " with ",
-              treeviewDictionary[selection]["_bMatchScore"], " match score")
+        print("Selected result: ", selection, " with ", treeviewDictionary[selection]["_bMatchScore"], " match score")
         # Pull selected item from dictionary and write to template
         fillTemplate(treeviewDictionary[selection])
+
+        selected_result = treeviewDictionary[selection]
 
         # Close the window
         window.destroy()
         window.quit()
+       
+    if debug:
+        # Skip the GUI and just select the Highest Match Score
+        # Find the highest match score
+        highestMatchScore = 0
+        highestMatchScoreIndex = 0
+        for i, data in enumerate(bestMatchedSamples):
+            matchScore = float(data["_bMatchScore"].replace("%", ""))
+            if matchScore > highestMatchScore:
+                highestMatchScore = matchScore
+                highestMatchScoreIndex = i
+
+        # Get the selected result with the highest match score
+        try:
+            selected_result = bestMatchedSamples[highestMatchScoreIndex]
+        except:
+            print("No results found for sample " + sampleName)
+            print(bestMatchedSamples)
+            print(highestMatchScoreIndex)
+            print(len(bestMatchedSamples))
+            print("Exiting...")
+
+        selection_name = selected_result["_bMatchName"]
+        selection_score = selected_result["_bMatchScore"]
+
+        # Print the selected result and its match score
+        print("Selected result: ", selection_name, " with ", selection_score, " match score")
+        # Pull selected item from dictionary and write to template
+        fillTemplate(selected_result)
+
+        # Close the window
+        window.destroy()
+        window.quit()
+        return 
 
     submit_button = tk.Button(window, text='SELECT RESULT', command=submit)
     tree.pack()

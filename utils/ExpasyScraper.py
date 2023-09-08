@@ -11,7 +11,8 @@ import time
 from bs4 import BeautifulSoup
 import threading
 from utils.DictionaryGenerator import generateReplacementDictionary
-from params import waitTime
+from params import waitTime, Headless, debug
+
 
 
 def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
@@ -53,7 +54,7 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     # Create a new instance of the Firefox driver
     options = Options()
     options.binary_location = r'C:\Program Files\Mozilla Firefox\firefox.exe'
-    options.headless = True
+    options.headless = Headless
     
     driver = webdriver.Firefox(options=options)
 
@@ -105,28 +106,62 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
 
     warning_element = driver.find_element("id", "warning")
     display_value = warning_element.value_of_css_property('display')
+
     if display_value == 'block':
         print("No results for " + sampleName + " from Expasy STR Search")
-        driver.quit()
-        return []
+        data_dict  =   {
+            "Accession": sampleName,
+            "Name": "N/A",
+            "Nº Markers": "N/A",
+            "Score": "0%",
+            "Amel": "",
+            "CSF1PO": "",
+            "D2S1338": "",
+            "D3S1358": "",
+            "D5S818": "",
+            "D7S820": "",
+            "D8S1179":"",
+            "D13S317": "",
+            "D16S539": "",
+            "D18S51": "",
+            "D19S433":"",
+            "D21S11": "",
+            "FGA": "",
+            "Penta D": "",
+            "Penta E": "",
+            "TH01": "",
+            "TPOX": "",
+            "vWA": ""
+        }
+        # create a pandas dataframe from the data
+        tableDF = pandas.DataFrame(data_dict, index=[2])
+        #fill index 0 and 1 with None
+        tableDF.loc[0] = "None"
+        tableDF.loc[1] = "None"
+        #Sort the index
+        tableDF = tableDF.sort_index()
+    else:
+        table = driver.find_element("id", "table-results")
+        html = table.get_attribute("outerHTML")
+        soup = BeautifulSoup(html, "html.parser")
+        rows = soup.find_all("tr")
+        header_row = rows[0]
+        column_names = [th.text for th in header_row.find_all("th")]
 
-    # if "Warning:" in driver.page_source or "The query returned no results." in driver.page_source:
-    table = driver.find_element("id", "table-results")
-    html = table.get_attribute("outerHTML")
-    soup = BeautifulSoup(html, "html.parser")
-    rows = soup.find_all("tr")
-    header_row = rows[0]
-    column_names = [th.text for th in header_row.find_all("th")]
+        # Store the data in a list of lists
+        data = []
+        for row in rows:
+            cells = row.find_all("td")
+            values = [cell.text for cell in cells]
+            data.append(values)
 
-    # Store the data in a list of lists
-    data = []
-    for row in rows:
-        cells = row.find_all("td")
-        values = [cell.text for cell in cells]
-        data.append(values)
+        tableDF = pandas.DataFrame(data, columns=column_names)
 
-    tableDF = pandas.DataFrame(data, columns=column_names)
-    # input("Press Enter to continue...")
+    if debug:
+        print("Expasy Results for " + sampleName + ":")
+        print(tableDF)
+
+
     # Close the browser
     driver.quit()
 

@@ -26,7 +26,13 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     # add the content of each document to the combined document keep the formatting each document
     # add a page break to the end of each document except the last one
     for doc in listOfSamples:
-        temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
+        try:    
+            temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
+        except:
+            # Try again
+            print("Trying again... for " + doc)
+            temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
+
         for element in temp_doc.element.body:
             combined_document.element.body.append(element)
         # combined_document.add_page_break()
