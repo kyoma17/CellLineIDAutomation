@@ -140,7 +140,7 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
             tableDF = tableDF.sort_index()
 
         elif data_columnLength < column_length:
-            print("Column match issue")
+            # print("Column match issue")
             # This occures when the Webpage does not show the last columns
             try :
                 tableDF = pandas.DataFrame(data, columns=column_names)

@@ -98,6 +98,20 @@ def fillTemplate(replacementsDictionary):
     # Save the modified document to the CellLineTEMP folder in the current directory
     document.save('CellLineTEMP/' + sampleName + '.docx')
 
+    # Check if the sampleName.docx was created, if not then try again 2 more times
+    if not os.path.exists('CellLineTEMP/' + sampleName + '.docx'):
+        print("Trying again... for " + sampleName)
+        document.save('CellLineTEMP/' + sampleName + '.docx')
+
+    if not os.path.exists('CellLineTEMP/' + sampleName + '.docx'):
+        print("Trying again... for " + sampleName)
+        document.save('CellLineTEMP/' + sampleName + '.docx')
+
+    if not os.path.exists('CellLineTEMP/' + sampleName + '.docx'):
+        print("Trying again... for " + sampleName)
+        document.save('CellLineTEMP/' + sampleName + '.docx')
+
+    
     injectAndRunRedCodeVBA('CellLineTEMP/' + sampleName + '.docx')
 
     print("Done with " + sampleName)
@@ -107,6 +121,12 @@ def fillTemplate(replacementsDictionary):
 ########################################################################################################################
 def injectAndRunRedCodeVBA(fileName):
     # Inject and run VBA code to the document
+
+    # Make sure the word application is closed before running the code
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if proc.name() == "WINWORD.EXE":
+            proc.kill()
 
     # Current Directory
     currentDirectory = os.getcwd()
@@ -137,5 +157,11 @@ def injectAndRunRedCodeVBA(fileName):
 
     # Quit the word application
     word.Quit()
+
+    # Make sure the word application is closed after running the code
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if proc.name() == "WINWORD.EXE":
+            proc.kill()
 
 ########################################################################################################################

@@ -1,0 +1,25 @@
+FROM --platform=arm64 ubuntu:20.04
+
+# Path: DockerFile
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
+    python3-setuptools \
+    python3-venv \
+    git \
+    vim \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pip: Install requirements
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --upgrade pip
+RUN pip3 install -r /tmp/requirements.txt
