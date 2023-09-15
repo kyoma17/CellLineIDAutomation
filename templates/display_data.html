@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Results</title>
+    <style>
+        /* Include some basic styling for the tables. Adjust as necessary. */
+        .dataframe {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .dataframe th, .dataframe td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Database Results:</h2>
+
+{% for table, sample in zip(tables, sample_order) %}
+    <h3>Sample: {{ sample }}</h3>
+    {{ table|safe }} <!-- Use the safe filter to render the raw HTML -->
+    <br>
+{% endfor %}
+
+</body>
+</html>

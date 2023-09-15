@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Query Results</title>
+</head>
+<body>
+    <h2>Query Results:</h2>
+    <form method="post">
+        {% for idx, df in enumerate(dataframes) %}
+            <h3>Sample {{ idx + 1 }}</h3>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        {% for column in df.columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for _, row in df.iterrows() %}
+                        <tr>
+                            <td><input type="radio" name="best_result_{{ idx }}" value="{{ loop.index }}"></td>
+                            {% for cell in row %}
+                                <td>{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+        <input type="submit" value="Submit Selections">
+    </form>
+</body>
+</html>

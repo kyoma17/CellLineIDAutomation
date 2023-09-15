@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Best Result</title>
+</head>
+<body>
+    <h2>Select Best Result for Sample</h2>
+
+    <form action="/save_or_export" method="post">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Name</th>
+                    <th>Dataset</th>
+                    <th>Match Score</th>
+                    <!-- Add other columns as required -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in bestMatchedSamples %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_{{ loop.index }}" value="{{ data.name }}"></td>
+                        <td>{{ data.name }}</td>
+                        <td>{{ data._dataset }}</td>
+                        <td>{{ data._bMatchScore }}</td>
+                        <!-- Add other data columns as required -->
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <input type="submit" name="action" value="SAVE Project">
+        <input type="submit" name="action" value="Export Results">
+    </form>
+</body>
+</html>

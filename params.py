@@ -11,7 +11,7 @@ waitTime = 20
 MaxThreads = 5
 
 # Allows Selenium to run in the background without opening a browser window
-Headless = True
+Headless = False
 
 # File Paths
 

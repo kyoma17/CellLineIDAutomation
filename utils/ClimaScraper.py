@@ -42,7 +42,9 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     driver = webdriver.Firefox(options=options)
 
     # Open a web browser and navigate to the website
-    driver.get('http://bioinformatics.hsanmartino.it/clima2/index.php')
+    # driver.get('http://bioinformatics.hsanmartino.it/clima2/index.php')
+    driver.get('https://bioinformatics.hsanmartino.it/clima2/')
+    
     
     # Wait for the page to load
     WebDriverWait(driver, waitTime).until(EC.presence_of_element_located((By.ID, "usr_email")))

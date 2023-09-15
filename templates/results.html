@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Query Results</title>
+</head>
+<body>
+    <h2>Query Results for {{ selected_client }} - PO Number: {{ po_number }}</h2>
+
+    {% for table in tables %}
+    <h3>Results for Sample: {{ loop.index }}</h3>
+    <table border="1">
+        {% for row in table %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    {% endfor %}
+
+    <a href="/">Back to Upload Page</a>
+</body>
+</html>

@@ -8,3 +8,4 @@ pip3 install pywin32
 pip3 install openpyxl
 pip3 install psutil
 pip3 install ocx.opc
+pip install flask

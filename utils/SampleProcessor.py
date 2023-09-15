@@ -24,8 +24,7 @@ def check_allele_empty(df):
 def processSamples(df, max_threads=MaxThreads):
     df = remove_trailing_zeros(df)
     remove_OL(df)
-
-
+    
     sampleList = df["Sample Name"].unique()
 
     grouped_df = df.groupby("Sample Name", sort=False)

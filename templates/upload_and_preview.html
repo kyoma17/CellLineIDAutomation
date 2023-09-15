@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Upload and Preview Genotyping File</title>
+</head>
+
+<body>
+    <h2>Order Information:</h2>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        <label for="client">Select Client:</label>
+        <select name="client" required>
+            {% for client in client_list %}
+            <option value="{{ client }}" {% if client==selected_client %}selected{% endif %}>{{ client }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="po_number">PO Number:</label>
+        <input type="text" name="po_number" value="{{ po_number }}" required>
+
+        <br><br>
+        <label for="file">Upload your genotyping file:</label>
+        <input type="file" name="file">
+        <input type="submit" value="Upload">
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% if data %}
+    <h2>Preview of uploaded file:</h2>
+    <table border="1">
+        {% for row in data %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+    {% if can_query %}
+    <form action="/query_database" method="post"> <!-- Adjust the action URL as per your needs -->
+        <input type="hidden" name="selected_client" value="{{ selected_client }}">
+        <input type="hidden" name="po_number" value="{{ po_number }}">
+        <input type="submit" value="Query Database">
+    </form>
+    {% endif %}
+</body>
+
+</html>
