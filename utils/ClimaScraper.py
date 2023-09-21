@@ -43,7 +43,7 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
 
     # Open a web browser and navigate to the website
     # driver.get('http://bioinformatics.hsanmartino.it/clima2/index.php')
-    driver.get('https://bioinformatics.hsanmartino.it/clima2/')
+    driver.get('https://bioinformatics.hsanmartino.it/clima2/index.php')
     
     
     # Wait for the page to load

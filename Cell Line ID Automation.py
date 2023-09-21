@@ -47,7 +47,7 @@ def main():
         # file_path = "TestFiles/SuperTest.xlsx"
         # file_path = "TestFiles/SuperTest - Double.xlsx"
         selected_client = "Wood"
-        reference_number = "20230906"
+        reference_number = "testtest"
     else:
         # get file path from user using tkinter file dialog
         tkinter.Tk().withdraw()

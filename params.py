@@ -11,9 +11,16 @@ waitTime = 20
 MaxThreads = 5
 
 # Allows Selenium to run in the background without opening a browser window
-Headless = False
+Headless = True
 
 # File Paths
 
 # For Development and Debugging Purposes
 debug = False
+
+
+# If the program is Not running on ETNA then set Headless to True and debug to False automatically
+import platform
+if platform.node() != "ETNA":
+    Headless = True
+    debug = False
