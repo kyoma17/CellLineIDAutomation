@@ -9,7 +9,7 @@ waitTime = 20
 
 # Set the number of threads to use for processing the samples
 # Too many threads will cause the Clima or Expasy server to not respond quickly enough
-MaxThreads = 10
+MaxThreads = 2
 
 # Allows Selenium to run in the background without opening a browser window
 Headless = True
@@ -17,7 +17,7 @@ Headless = True
 # File Paths
 
 # For Development and Debugging Purposes
-debug = True
+debug = False
 
 # If the program is Not running on ETNA then set Headless to True and debug to False automatically
 if platform.node() != "ETNA":
