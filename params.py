@@ -1,5 +1,6 @@
-# For the Clima Website Contact information 
-email_key =  "info@laragen.com"
+# For the Clima Website Contact information
+import platform
+email_key = "info@laragen.com"
 
 # Selenium Parameters
 # Set the wait time for the browser to load the page in seconds
@@ -8,7 +9,7 @@ waitTime = 20
 
 # Set the number of threads to use for processing the samples
 # Too many threads will cause the Clima or Expasy server to not respond quickly enough
-MaxThreads = 5
+MaxThreads = 10
 
 # Allows Selenium to run in the background without opening a browser window
 Headless = True
@@ -16,11 +17,9 @@ Headless = True
 # File Paths
 
 # For Development and Debugging Purposes
-debug = False
-
+debug = True
 
 # If the program is Not running on ETNA then set Headless to True and debug to False automatically
-import platform
 if platform.node() != "ETNA":
     Headless = True
     debug = False

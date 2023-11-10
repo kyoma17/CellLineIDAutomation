@@ -3,6 +3,7 @@ import time
 import win32com.client
 import os
 
+
 def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     # Create Replace Dictionary for the final report
     # This dictionary is for the Header in the Paperwork
@@ -17,7 +18,6 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
                    "_Batches": "1",
                    }
 
-
     # Open the Header and Footer template
     combined_document = docx.Document('ClientTemplate.docx')
 
@@ -26,9 +26,9 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     # add the content of each document to the combined document keep the formatting each document
     # add a page break to the end of each document except the last one
     for doc in listOfSamples:
-        try:    
+        try:
             temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
-        except:
+        except Exception as e:
             # Try again
             print("Trying again... for " + doc)
             temp_doc = docx.Document("CellLineTEMP/" + doc + ".docx")
@@ -45,7 +45,7 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     clientFileName = clientInfo["Nickname"].values[0].replace(" ", "_")
 
     # Save the final report in CellLineOutput folder
-    report_name = "CellLineOutput/" + clientFileName + "_Cell_Line_ID_" + reference_number + ".docx" 
+    report_name = "CellLineOutput/" + clientFileName + "_Cell_Line_ID_" + reference_number + ".docx"
     combined_document.save(report_name)
 
     # Convert the Python dictionary to a VBA dictionary
@@ -72,7 +72,6 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     with open("MSO/PageBreaker.bas", "r") as f:
         vbaCode += f.read()
 
-
     # Inject vba script into word document
     doc.VBProject.VBComponents.Add(1).CodeModule.AddFromString(vbaCode)
 
@@ -83,4 +82,3 @@ def consolidateWordOutputs(listOfSamples, clientInfo, reference_number):
     # save and close word document
     doc.Save()
     doc.Close()
-

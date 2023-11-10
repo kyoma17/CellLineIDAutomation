@@ -1,6 +1,7 @@
 import os
 import shutil
 
+
 def PrepTempFolder():
     if not os.path.exists("CellLineTEMP"):
         os.makedirs("CellLineTEMP")
@@ -18,5 +19,3 @@ def PrepTempFolder():
                 shutil.rmtree(file_path)
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
-
-

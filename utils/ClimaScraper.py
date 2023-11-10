@@ -1,33 +1,56 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver import ActionChains
 from selenium.webdriver.firefox.options import Options
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-import pandas
 import time
+import pandas
 from bs4 import BeautifulSoup
 import threading
 from utils.DictionaryGenerator import generateReplacementDictionary
 from params import waitTime, Headless, debug
 
 
-def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
-    # Takes in a pandas dataframe of a single sample and performs the selenium script against Clima
-    # Will return a pandas dataframe of the results of web scraping
+def retry_scraper(scraper_function, max_retries=5, delay=5):
+    '''
+    A decorator that will retry a web scraper function a certain number of times before giving up
+    '''
+    def wrapper(*args, **kwargs):
+        attempts = 0
+        while attempts < max_retries:
+            try:
+                return scraper_function(*args, **kwargs)
+            except Exception as e:
+                attempts += 1
+                print(f"Retry {attempts}/{max_retries} for {scraper_function.__name__} due to error: {e}")
+                time.sleep(delay)
+        print(f"All retries failed for {scraper_function.__name__} on sample {args[0]}")
+        return None  # Or handle the failure as needed
+    return wrapper
 
+
+@retry_scraper
+def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
+    '''
+    Takes in a pandas dataframe of a single sample and performs the selenium script against Clima
+    Will return a pandas dataframe of the results of web scraping 
+
+    Args:
+        sampleName (str): The name of the sample
+        sampleDF (pandas.DataFrame): The dataframe of the sample
+        sampleNumber (int): The number of the sample in the excel fileE
+    '''
     # Webpage input fields
-    D5S818_list = ["D5S818", "D5S818_data1","D5S818_data2", "D5S818_data3", "D5S818_data4"]
-    D13S317_list = ["D13S317", "D13S317_data1","D13S317_data2", "D13S317_data3", "D13S317_data4"]
-    D7S820_list = ["D7S820", "D7S820_data1","D7S820_data2", "D7S820_data3", "D7S820_data4"]
-    D16S539_list = ["D16S539", "D16S539_data1","D16S539_data2", "D16S539_data3", "D16S539_data4"]
+    D5S818_list = ["D5S818", "D5S818_data1", "D5S818_data2", "D5S818_data3", "D5S818_data4"]
+    D13S317_list = ["D13S317", "D13S317_data1", "D13S317_data2", "D13S317_data3", "D13S317_data4"]
+    D7S820_list = ["D7S820", "D7S820_data1", "D7S820_data2", "D7S820_data3", "D7S820_data4"]
+    D16S539_list = ["D16S539", "D16S539_data1", "D16S539_data2", "D16S539_data3", "D16S539_data4"]
     VWA_list = ["vWA", "VWA_data1", "VWA_data2", "VWA_data3", "VWA_data4"]
-    TH01_list = ["TH01", "TH01_data1","TH01_data2", "TH01_data3", "TH01_data4"]
+    TH01_list = ["TH01", "TH01_data1", "TH01_data2", "TH01_data3", "TH01_data4"]
     Amelogenin_list = ["AMEL", "AMG_data1", "AMG_data2"]
-    TPOX_list = ["TPOX", "TPOX_data1","TPOX_data2", "TPOX_data3", "TPOX_data4"]
-    CSF1PO_list = ["CSF1PO", "CSF1PO_data1", "CSF1PO_data2","CSF1PO_data3", "CSF1PO_data4"]
+    TPOX_list = ["TPOX", "TPOX_data1", "TPOX_data2", "TPOX_data3", "TPOX_data4"]
+    CSF1PO_list = ["CSF1PO", "CSF1PO_data1", "CSF1PO_data2", "CSF1PO_data3", "CSF1PO_data4"]
     # D21S11_list = ["D21S11", "D21S11_data1", "D21S11_data2", "D21S11_data3", "D21S11_data4"]
 
     master_list = [D5S818_list, D13S317_list, D7S820_list, D16S539_list,
@@ -38,17 +61,15 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     options.binary_location = r'C:\Program Files\Mozilla Firefox\firefox.exe'
     webdriver_path = r"/webdrivers/geckodriver.exe"
     options.headless = Headless
-    
+
     driver = webdriver.Firefox(options=options)
 
     # Open a web browser and navigate to the website
     # driver.get('http://bioinformatics.hsanmartino.it/clima2/index.php')
     driver.get('https://bioinformatics.hsanmartino.it/clima2/index.php')
-    
-    
+
     # Wait for the page to load
     WebDriverWait(driver, waitTime).until(EC.presence_of_element_located((By.ID, "usr_email")))
-
 
     print("Collecting data for sample " + sampleName + " from Clima...")
 
@@ -73,16 +94,42 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     country.send_keys("United States")
 
     # Find the submit button
-    submit_button = driver.find_element(
-        By.XPATH, "//input[@type='submit' and @value='submit']")
+    # submit_button = driver.find_element(
+    #     By.XPATH, "//input[@type='submit' and @value='submit']")
 
+    # # Click the submit button
+    # submit_button.click()
 
-    # Click the submit button
-    submit_button.click()
+    def click_submit_with_check(driver, max_attempts=10):
+        '''
+        Clicks the submit button and checks if the submission was successful
+        '''
+        attempts = 0
+        while attempts < max_attempts:
+            try:
+                # Find and click the submit button
+                submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='submit']")
+                submit_button.click()
 
+                # Wait for the result element to appear
+                WebDriverWait(driver, 60).until(
+                    EC.presence_of_element_located((By.XPATH, "//h3[contains(text(), 'CLIMA 2.2: Cell line identification: results')]"))
+                )
+                return True  # Success
+            except Exception as e:
+                print(f"Attempt {attempts + 1} failed: {e}")
+                attempts += 1
+        print("Failed to confirm submission after multiple attempts.")
+        return False
+
+    if not click_submit_with_check(driver):
+        print("Failed to submit sample " + sampleName + " to Clima.")
+        raise Exception("Failed to submit sample " + sampleName + ". Reloading the page  to try again.")
+        return None
+
+    # time.sleep(5)
     # Wait for the page to load
     WebDriverWait(driver, waitTime).until(EC.presence_of_element_located((By.XPATH, "(//table)[3]")))
-    
 
     # retreive table from webpage and convert to pandas dataframe
     table = driver.find_element(By.XPATH, "(//table)[3]")
@@ -92,7 +139,6 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
     rows = souptable.find_all("tr")
     header_row = rows[0]
     column_names = [th.text for th in header_row.find_all("th")]
-
 
     # Store the data in a list of lists
     data = []
@@ -113,7 +159,7 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
                 "Dataset": "Clima",
                 "Cat. No.": "N/A",
                 "CVCL": "N/A",
-                "% Match": "0%",  
+                "% Match": "0%",
                 "D5S818": "",
                 "D13S317": "",
                 "D7S820": "",
@@ -135,19 +181,19 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
             }
             # create a pandas dataframe from the data
             tableDF = pandas.DataFrame(data_dict, index=[2])
-            #fill index 0 and 1 with None
+            # fill index 0 and 1 with None
             tableDF.loc[0] = "None"
             tableDF.loc[1] = "None"
-            #Sort the index
+            # Sort the index
             tableDF = tableDF.sort_index()
 
         elif data_columnLength < column_length:
             # print("Column match issue")
             # This occures when the Webpage does not show the last columns
-            try :
+            try:
                 tableDF = pandas.DataFrame(data, columns=column_names)
 
-            except:
+            except Exception as e:
                 # Add empty columns to the data
                 for i in range(column_length - data_columnLength):
                     data[1].append("")
@@ -157,12 +203,12 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
                 tableDF.loc[1] = "None"
                 tableDF = tableDF.sort_index()
 
-
         else:
             tableDF = pandas.DataFrame(data, columns=column_names)
-    
-    except:
+
+    except Exception as e:
         print("Error with tableDF")
+        print(e)
         print(data)
         print(column_names)
         print(data_columnLength)
@@ -174,17 +220,16 @@ def ClimaSTRSearch(sampleName, sampleDF, sampleNumber):
         print("Clima Results for " + sampleName + ":")
         print(tableDF)
 
-
     driver.quit()
 
     bestMatched = []
     threads = []
-    
+
     number_of_results = 10
 
     # Create a thread for the first 10, if there are 10, otherwise create a thread for each result
     for i in range(2, number_of_results + 2):
-        try :
+        try:
             thread = threading.Thread(target=bestMatched.append, args=(tableDF.iloc[i],))
             threads.append(thread)
             thread.start()

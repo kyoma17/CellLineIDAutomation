@@ -1,6 +1,18 @@
 def generateReplacementDictionary(sampleName, sampleDF, bestMatched, website, sampleNumber):
-    # Generate Replacement Dictionary for the Template
-
+    '''
+    Generates a dictionary of the replacement values for the template
+    The replacement values are taken from the sample dataframe and the best matched result
+    to be used to replace the values in the template
+    Args:
+        sampleName: The name of the sample
+        sampleDF: The dataframe of the sample
+        bestMatched: The best matched result
+        website: The website the sample was run on
+        sampleNumber: The sample number
+    Returns:
+        replacementsDictionary: The dictionary of the replacement values
+    '''
+    
     # Clima dictionary for the template
     if website == "Clima":
         replacementsDictionary = {

@@ -7,18 +7,41 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import pandas
-import time
 from bs4 import BeautifulSoup
 import threading
 from utils.DictionaryGenerator import generateReplacementDictionary
 from params import waitTime, Headless, debug
+import time
 
 
+def retry_scraper(scraper_function, max_retries=3, delay=2):
+    '''
+    A decorator that wraps the passed in function and retries
+    '''
+    def wrapper(*args, **kwargs):
+        attempts = 0
+        while attempts < max_retries:
+            try:
+                return scraper_function(*args, **kwargs)
+            except Exception as e:
+                attempts += 1
+                print(f"Retry {attempts}/{max_retries} for {scraper_function.__name__} due to error: {e}")
+                time.sleep(delay)
+        print(f"All retries failed for {scraper_function.__name__}")
+        return None  # Or handle the failure as needed
+    return wrapper
 
+
+@retry_scraper
 def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
-    # Takes in a pandas dataframe of a single sample and performs the selenium script against Expasy
-    # Will return a pandas dataframe of the results of web scraping
-
+    '''
+    Takes in a pandas dataframe of a single sample and performs the selenium script against Expasy
+    Will return a pandas dataframe of the results of web scraping
+    Args:
+        sampleName: The name of the sample
+        sampleDF: The dataframe of the sample
+        sampleNumber: The sample number
+    '''
     # Webpage input fields
     Amelogen = ["AMEL", "input-Amelogenin"]
     CSF1PO = ["CSF1PO", "input-CSF1PO"]
@@ -55,7 +78,7 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     options = Options()
     options.binary_location = r'C:\Program Files\Mozilla Firefox\firefox.exe'
     options.headless = Headless
-    
+
     driver = webdriver.Firefox(options=options)
 
     # go to the Expasy STR website
@@ -63,7 +86,6 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
 
     # Wait for the page to load
     WebDriverWait(driver, waitTime).until(EC.element_to_be_clickable((By.ID, "search")))
-
 
     print("Collecting data for sample " + sampleName + " from Expasy...")
     # Click Checkboxes if GP24
@@ -96,12 +118,12 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     driver.find_element("id", "search").click()
 
     # Wait for the results to load
-    try:   
+    try:
         WebDriverWait(driver, waitTime).until(EC.element_to_be_clickable((By.ID, "export")))
-    except:
+    except Exception as e:
         # print("Timeout for " + sampleName + " from Expasy STR Search")
         pass
-    
+
     # if no results, return empty list of empty dictionary
 
     warning_element = driver.find_element("id", "warning")
@@ -109,7 +131,7 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
 
     if display_value == 'block':
         print("No results for " + sampleName + " from Expasy STR Search")
-        data_dict  =   {
+        data_dict = {
             "Accession": sampleName,
             "Name": "N/A",
             "Nº Markers": "N/A",
@@ -120,11 +142,11 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
             "D3S1358": "",
             "D5S818": "",
             "D7S820": "",
-            "D8S1179":"",
+            "D8S1179": "",
             "D13S317": "",
             "D16S539": "",
             "D18S51": "",
-            "D19S433":"",
+            "D19S433": "",
             "D21S11": "",
             "FGA": "",
             "Penta D": "",
@@ -135,10 +157,10 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
         }
         # create a pandas dataframe from the data
         tableDF = pandas.DataFrame(data_dict, index=[2])
-        #fill index 0 and 1 with None
+        # fill index 0 and 1 with None
         tableDF.loc[0] = "None"
         tableDF.loc[1] = "None"
-        #Sort the index
+        # Sort the index
         tableDF = tableDF.sort_index()
     else:
         table = driver.find_element("id", "table-results")
@@ -161,7 +183,6 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
         print("Expasy Results for " + sampleName + ":")
         print(tableDF)
 
-
     # Close the browser
     driver.quit()
 
@@ -174,7 +195,7 @@ def ExpasySTRSearch(sampleName, sampleDF, sampleNumber):
     # Create a thread for the first 10, if there are 10, otherwise create a thread for each result
 
     for i in range(2, number_of_results + 2):
-        try :
+        try:
             thread = threading.Thread(target=bestMatched.append, args=(tableDF.iloc[i],))
             threads.append(thread)
             thread.start()

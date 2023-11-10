@@ -1,51 +1,60 @@
 # Author: Kenny Ma
 # Contact: 626-246-2233 or kyoma17@gmail.com
-Date =  "2023-September-8"
-version = "3.7"
+import warnings
+import pandas as pd
+import pandas
+import tkinter
+
+from params import debug
+from utils.PrepTemp import PrepTempFolder
+from utils.SelectClient import SelectClient
+from utils.SampleProcessor import processSamples
+from utils.WordConsolidator import consolidateWordOutputs
+from utils.SampleSelector import selectSample
+from tkinter import filedialog
+
+__Maintainer__ = "Kenny Ma"
+_Date_ = "2023-Nov-10"
+_Version_ = "3.7.1"
+
+'''
 # This is the Main Operating Script for the Cell Line ID Automation Program
 
-# Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
-# The script will then consolidate the results into a single .docx file
-# Requirements: Selenium, Pandas, BeautifulSoup, docx, tkinter, Firefox, geckodriver.exe
-# there is a Requirements.txt file that can be used to install the required modules
-# Use pip install -r Requirements.txt to install the required modules
-# GekoDriver: Place geckodriver.exe in the same directory as this script
-# Instructions: Run the script and select the input file from the GMapper program. The script will then perform the ClimaSTR Cell Line ID script on each sample and output a .docx file for each sample.
-# The input file must have the following information: Sample Name, D5S818, D13S317, D7S820, D16S539, vWA, TH01, AMEL, TPOX, CSF1PO, D21S11
+Description: This script will take in an excel file from the GMapper program and perform the ClimaSTR Cell Line ID script on each sample
+The script will then consolidate the results into a single .docx file
+Requirements: Selenium, Pandas, BeautifulSoup, docx, tkinter, Firefox, geckodriver.exe
+there is a Requirements.txt file that can be used to install the required modules
+Use pip install -r Requirements.txt to install the required modules
+GekoDriver: Place geckodriver.exe in the same directory as this script
+Instructions: Run the script and select the input file from the GMapper program. The script will then perform the ClimaSTR Cell Line ID script on 
+each sample and output a .docx file for each sample.
+The input file must have the following information: Sample Name, D5S818, D13S317, D7S820, D16S539, vWA, TH01, AMEL, TPOX, CSF1PO, D21S11
 
-# You must have Word installed on your computer with the Trust Center settings set to "Enable all macros"
-
-from tkinter import filedialog
-import tkinter
-import pandas
-import pandas as pd
-import warnings
+!!!WARNING!!! You must have Word installed on your computer with the Trust Center settings set to "Enable all macros"
+'''
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-from utils.SampleSelector import selectSample
-from utils.WordConsolidator import consolidateWordOutputs
-from utils.SampleProcessor import processSamples
-from utils.SelectClient import SelectClient
-from utils.PrepTemp import PrepTempFolder
-from utils.TemplateWriter import fillTemplate
-from params import debug
 
 ########################################################################################################################
+
 def main():
     print("Welcome to the ClimaSTR Cell Line ID script" '\n' "Please select the input file from the GMapper Program")
-    print("version: " + str(version))
+    print("version: " + str(_Version_))
+    print("Last Updated: " + str(_Date_) + '\n')
 
     if debug:
         print("WARNING: Debug mode is enabled. Best Result Selection will not Show Up")
         print("Highest scoring result will be selected automatically")
-        file_path = "TestFiles/20230906 Wood BMS-all.xlsx"
+        # file_path = "TestFiles/20230906 Wood BMS-all.xlsx"
         # file_path = "TestFiles/DebugOL2.xlsx"
         # file_path = "TestFiles/GP10Single.xlsx"
         # file_path = "TestFiles/SuperTest.xlsx"
         # file_path = "TestFiles/SuperTest - Double.xlsx"
+        file_path = "TestFiles/Nov2023Test.xlsx"
+
         selected_client = "Wood"
         reference_number = "testtest"
     else:
@@ -85,7 +94,6 @@ def main():
                 selected_results.append(selectSample(results, sampleName))
                 break
 
-
     # run vba macro to save all word documents
     consolidateWordOutputs(sample_order, selected_client_info, reference_number)
 
@@ -93,6 +101,7 @@ def main():
     print("Script is finished. Please check the output folder for the results.")
     # input("Press Enter to exit...")
     quit()
+
 
 ########################################################################################################################
 if __name__ == "__main__":

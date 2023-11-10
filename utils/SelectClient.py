@@ -3,9 +3,14 @@ from tkinter import messagebox
 import pandas as pd
 
 
-
 def SelectClient():
-    # Selects the client from the listbox and returns the order number
+    '''
+    Selects the client from the listbox and returns the order number
+    Returns:
+        selected_item: The selected client
+        order_number: The order number
+    '''
+
     print("Select Client from the listbox and enter the order number")
 
     # Load Client Data from Excel File and create a dataframe
@@ -21,10 +26,10 @@ def SelectClient():
         nonlocal order_number
 
         # Window Title "Please Select a Client"
-        
+
         selected_item = listbox.get(listbox.curselection())
         order_number = order_entry.get()
-        
+
         print("Selected Client:", selected_item)
         print("Order number:", order_number)
 
@@ -38,7 +43,6 @@ def SelectClient():
 
     # Create a listbox with the client names and a submit button
     label = tk.Label(root, text="Please Select a Client")
-
 
     listbox = tk.Listbox(root)
     for item in client_list:
@@ -60,7 +64,11 @@ def SelectClient():
 
     return selected_item, order_number
 
+
 def display_readme():
+    '''
+    Displays the contents of readme.txt in a message box
+    '''
     try:
         with open('readme.txt', 'r') as file:
             readme_content = file.read()
@@ -82,7 +90,11 @@ def display_readme():
     # Start the Tkinter event loop
     root.mainloop()
 
+
 def show_done_window():
+    '''
+    Shows a "Done" window with a "Done" button that closes the window and exits the program
+    '''
     def show_done_message():
         messagebox.showinfo("Done", "Cell Line ID script has finished running!")
         root.destroy()  # Close the "Done" window and exit the program

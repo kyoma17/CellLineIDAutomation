@@ -1,10 +1,9 @@
-import tkinter as tk
-from tkinter import ttk
 import docx
 import pandas
 import win32com.client
 import os
 import psutil
+
 
 def fillTemplate(replacementsDictionary):
     # Helper function to fill the template with the data from the dictionary
@@ -111,7 +110,6 @@ def fillTemplate(replacementsDictionary):
         print("Trying again... for " + sampleName)
         document.save('CellLineTEMP/' + sampleName + '.docx')
 
-    
     injectAndRunRedCodeVBA('CellLineTEMP/' + sampleName + '.docx')
 
     print("Done with " + sampleName)
@@ -119,6 +117,8 @@ def fillTemplate(replacementsDictionary):
     print("")
 
 ########################################################################################################################
+
+
 def injectAndRunRedCodeVBA(fileName):
     # Inject and run VBA code to the document
 
@@ -149,7 +149,7 @@ def injectAndRunRedCodeVBA(fileName):
     # Run the VBA code
     word.Run("ChangeMatchingToRed")
 
-    # Save the document 
+    # Save the document
     doc.Save()
 
     # Close the document

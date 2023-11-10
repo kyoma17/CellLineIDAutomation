@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t my-python-app .'
+            }
+        }
+
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'my-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
+                    sh 'docker login -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD'
+                    sh 'docker tag my-python-app my-registry/my-python-app'
+                    sh 'docker push my-registry/my-python-app'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            environment {
+                SSH_USER = 'root'
+                SSH_HOST = '192.168.2.180'
+                SSH_PORT = 22
+                SSH_KEY = credentials('eedc9010-4b1b-4b1b-8b1b-8b1b8b1b8b1b')
+            }
+            steps {
+                sshagent(['my-ssh-key']) {
+                    sh "ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker pull my-registry/my-python-app && docker run -d --name my-python-app -p 80:80 my-registry/my-python-app'"
+                }
+            }
+        }
+    }
+}

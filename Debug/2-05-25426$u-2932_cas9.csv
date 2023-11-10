@@ -1,0 +1,11 @@
+,File Name,Sample Name,Test Name,Markers,Dye,Allele1,Allele2,Allele3,Allele4
+0,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,AMEL,Y,X,Y,,
+1,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,CSF1PO,G,10,12,,
+2,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,D13S317,G,11,13,,
+3,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,D16S539,G,8,11,12,
+4,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,D21S11,B,28,30,31,
+5,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,D5S818,G,10,12,13,
+6,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,D7S820,G,9,10,13,
+7,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,TH01,B,9.3,,,
+8,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,TPOX,Y,8,11,12,13
+9,2-05-25426$u-2932_cas9_E01.fsa,2-05-25426$u-2932_cas9,GenePrint_10_v1.1,vWA,Y,14,16,17,19
