@@ -9,7 +9,7 @@ waitTime = 20
 
 # Set the number of threads to use for processing the samples
 # Too many threads will cause the Clima or Expasy server to not respond quickly enough
-MaxThreads = 2
+MaxThreads = 20
 
 # Allows Selenium to run in the background without opening a browser window
 Headless = True
