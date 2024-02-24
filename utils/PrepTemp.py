@@ -3,6 +3,10 @@ import shutil
 
 
 def PrepTempFolder():
+    """
+    Prepares the CellLineTEMP folder by deleting all files in the folder and creating the folder if it does not exist
+    :return: None
+    """
     if not os.path.exists("CellLineTEMP"):
         os.makedirs("CellLineTEMP")
 
