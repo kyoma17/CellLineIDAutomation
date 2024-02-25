@@ -9,38 +9,50 @@ pipeline {
     }
 
     stages{
-        stage('Checkout') {
+        // stage('Checkout') {
+        //     steps {
+        //         checkout scm
+        //     }
+        // }
+        // stage('Build') {
+        //         steps {
+        //             sh "docker build -t ${DOCKER_IMAGE}:${TAG} ."
+        //         }
+        //     }
+        // }
+        // stage("Lint") {
+        //     steps {
+        //         sh "echo 'Linting with flake8'"
+        //         sh "docker run ${DOCKER_IMAGE}:${TAG} flake8"
+        //     }
+        // }
+        // stage("Test") {
+        //     steps {
+        //         sh "echo 'Testing with pytest'"
+        //         sh "docker run ${DOCKER_IMAGE}:${TAG} pytest"
+        //     }
+        // }
+        // stage("Push") {
+        //     steps {
+        //         sh "echo 'Pushing to nexus'"
+        //         withCredentials([usernamePassword(credentialsId: 'nexus_creds', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD'), 
+        //         string(credentialsId: 'nexus_address', variable: 'NEXUS_ADDRESS')]) {
+        //             sh "docker login -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} ${NEXUS_ADDRESS}"
+        //             sh "docker tag ${DOCKER_IMAGE}:${TAG} ${NEXUS_ADDRESS}/${DOCKER_IMAGE}:${TAG}"
+        //             sh "docker push ${NEXUS_ADDRESS}/${DOCKER_IMAGE}:${TAG}"
+        //         }
+        //     }
+        // }
+        stage("Deploy") {
             steps {
-                checkout scm
-            }
-        }
-        stage('Build') {
-                steps {
-                    sh "docker build -t ${DOCKER_IMAGE}:${TAG} ."
+                sh "echo 'Deploying to k8s'"
+                withCredentials([usernamePassword(credentialsId: 'ubuntuserver_creds', usernameVariable: 'UBUNTUSERVER_USERNAME', passwordVariable: 'UBUNTUSERVER_PASSWORD'),
+                string(credentialsId: 'ubuntu_address', variable: 'UBUNTU_ADDRESS')]) {
+                    sh "sshpass -p ${UBUNTUSERVER_PASSWORD} scp -o StrictHostKeyChecking=no -r ${HOME} ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS}:/home/${UBUNTUSERVER_USERNAME}/"
+                    sh "sshpass -p ${UBUNTUSERVER_PASSWORD} ssh -o StrictHostKeyChecking=no ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS} 'cd /home/${UBUNTUSERVER_USERNAME}/CellLineID && docker-compose down && docker-compose up -d'"
                 }
             }
         }
-        stage("Lint") {
-            steps {
-                sh "echo 'Linting with flake8'"
-                sh "docker run ${DOCKER_IMAGE}:${TAG} flake8"
-            }
-        }
-        stage("Test") {
-            steps {
-                sh "echo 'Testing with pytest'"
-                sh "docker run ${DOCKER_IMAGE}:${TAG} pytest"
-            }
-        }
-        stage("Push") {
-            steps {
-                sh "echo 'Pushing to nexus'"
-                withCredentials([usernamePassword(credentialsId: 'nexus_creds', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD'), 
-                string(credentialsId: 'nexus_address', variable: 'NEXUS_ADDRESS')]) {
-                    sh "docker login -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} ${NEXUS_ADDRESS}"
-                    sh "docker tag ${DOCKER_IMAGE}:${TAG} ${NEXUS_ADDRESS}/${DOCKER_IMAGE}:${TAG}"
-                    sh "docker push ${NEXUS_ADDRESS}/${DOCKER_IMAGE}:${TAG}"
-                }
-            }
-        }
+
     }
+}
