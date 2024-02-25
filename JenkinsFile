@@ -48,9 +48,18 @@ pipeline {
                 sh "echo 'Deploying to Ubuntu Server'"
                 withCredentials([usernamePassword(credentialsId: 'ubuntu_server_creds', usernameVariable: 'UBUNTUSERVER_USERNAME', passwordVariable: 'UBUNTUSERVER_PASSWORD'),
                 string(credentialsId: 'ubuntu_address', variable: 'UBUNTU_ADDRESS')]) {
-                    sh "sshpass -p ${UBUNTUSERVER_PASSWORD} scp -o StrictHostKeyChecking=no -r ${HOME} ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS}:/home/${UBUNTUSERVER_USERNAME}/"
-                    sh "sshpass -p ${UBUNTUSERVER_PASSWORD} ssh -o StrictHostKeyChecking=no ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS} 'cd /home/${UBUNTUSERVER_USERNAME}/CellLineID && docker-compose down && docker-compose up -d'"
-                }
+                    sh "echo 'Deploying to ${UBUNTU_ADDRESS}'"
+                    sh """
+                    ssh ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS} << EOF
+                    git clone ${env.GIT_URL}
+                    cd ${env.GIT_REPO}
+                    git checkout ${env.GIT_COMMIT}
+                    docker build -t ${DOCKER_IMAGE}:${TAG} .
+                    docker run -d -p 80:80 ${DOCKER_IMAGE}:${TAG}
+                    exit 0
+                    EOF
+                    """
+
             }
         }
 
