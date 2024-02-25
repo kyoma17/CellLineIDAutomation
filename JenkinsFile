@@ -1,35 +1,46 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Build') {
+    environment {
+        HOME = "${WORKSPACE}/CellLineID"
+        DOCKER_IMAGE = "celllineid"
+        TAG = "dev-${env.GIT_COMMIT}+${env.BUILD_NUMBER}"
+        UNIQUE_BUILD_ID = "${env.BUILD_NUMBER}-${env.GIT_COMMIT}"
+    }
+
+    stages{
+        stage('Checkout') {
             steps {
-                sh 'docker build -t my-python-app .'
+                checkout scm
             }
         }
-
-        stage('Push') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'my-registry-creds', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')]) {
-                    sh 'docker login -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD'
-                    sh 'docker tag my-python-app my-registry/my-python-app'
-                    sh 'docker push my-registry/my-python-app'
+        stage('Build') {
+                steps {
+                    sh "docker build -t ${DOCKER_IMAGE}:${TAG} ."
                 }
             }
         }
-
-        stage('Deploy') {
-            environment {
-                SSH_USER = 'root'
-                SSH_HOST = '192.168.2.180'
-                SSH_PORT = 22
-                SSH_KEY = credentials('eedc9010-4b1b-4b1b-8b1b-8b1b8b1b8b1b')
-            }
+        stage("Lint") {
             steps {
-                sshagent(['my-ssh-key']) {
-                    sh "ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker pull my-registry/my-python-app && docker run -d --name my-python-app -p 80:80 my-registry/my-python-app'"
+                sh "echo 'Linting with flake8'"
+                sh "docker run ${DOCKER_IMAGE}:${TAG} flake8"
+            }
+        }
+        stage("Test") {
+            steps {
+                sh "echo 'Testing with pytest'"
+                sh "docker run ${DOCKER_IMAGE}:${TAG} pytest"
+            }
+        }
+        stage("Push") {
+            steps {
+                sh "echo 'Pushing to nexus'"
+                withCredentials([usernamePassword(credentialsId: 'nexus_creds', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD'), 
+                string(credentialsId: 'nexus_address', variable: 'NEXUS_ADDRESS')]) {
+                    sh "docker login -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} ${NEXUS_ADDRESS}"
+                    sh "docker tag ${DOCKER_IMAGE}:${TAG} ${NEXUS_ADDRESS}/${DOCKER_IMAGE}:${TAG}"
+                    sh "docker push ${NEXUS_ADDRESS}/${DOCKER_IMAGE}:${TAG}"
                 }
             }
         }
     }
-}
