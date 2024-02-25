@@ -45,8 +45,8 @@ pipeline {
         // }
         stage("Deploy") {
             steps {
-                sh "echo 'Deploying to k8s'"
-                withCredentials([usernamePassword(credentialsId: 'ubuntuserver_creds', usernameVariable: 'UBUNTUSERVER_USERNAME', passwordVariable: 'UBUNTUSERVER_PASSWORD'),
+                sh "echo 'Deploying to Ubuntu Server'"
+                withCredentials([usernamePassword(credentialsId: 'ubuntu_server_creds', usernameVariable: 'UBUNTUSERVER_USERNAME', passwordVariable: 'UBUNTUSERVER_PASSWORD'),
                 string(credentialsId: 'ubuntu_address', variable: 'UBUNTU_ADDRESS')]) {
                     sh "sshpass -p ${UBUNTUSERVER_PASSWORD} scp -o StrictHostKeyChecking=no -r ${HOME} ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS}:/home/${UBUNTUSERVER_USERNAME}/"
                     sh "sshpass -p ${UBUNTUSERVER_PASSWORD} ssh -o StrictHostKeyChecking=no ${UBUNTUSERVER_USERNAME}@${UBUNTU_ADDRESS} 'cd /home/${UBUNTUSERVER_USERNAME}/CellLineID && docker-compose down && docker-compose up -d'"
